@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wizard Online</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #cards { display: flex; flex-wrap: wrap; gap: 10px; }
+    .card {
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 10px;
+      width: 100px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      background: #f0f0f0;
+    }
+    .selected { background: #90ee90; }
+  </style>
+</head>
+<body>
+  <h1>Wizard Online</h1>
+  <div id="cards"></div>
+  <button id="playCard" disabled>Karte spielen</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const cardTypes = [
+      "Giants", "Elfs", "Humans", "Dwarfs", "Muschin", "Grebe"
+    ];
+
+    const cardsContainer = document.getElementById('cards');
+    const playBtn = document.getElementById('playCard');
+
+    let selectedCard = null;
+
+    // Beispiel: jeder Spieler bekommt 6 Karten (eine von jedem Typ)
+    function showCards() {
+      cardsContainer.innerHTML = '';
+      cardTypes.forEach(type => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.textContent = type;
+        card.onclick = () => {
+          if (selectedCard) {
+            selectedCard.classList.remove('selected');
+          }
+          selectedCard = card;
+          card.classList.add('selected');
+          playBtn.disabled = false;
+        };
+        cardsContainer.appendChild(card);
+      });
+    }
+
+    playBtn.onclick = () => {
+      if (!selectedCard) return;
+      const card = selectedCard.textContent;
+      socket.emit('playCard', card);
+      alert('Karte gespielt: ' + card);
+      playBtn.disabled = true;
+      selectedCard.classList.remove('selected');
+      selectedCard = null;
+    };
+
+    // Hier kannst du empfangen, wenn andere Spieler spielen
+    socket.on('cardPlayed', data => {
+      alert(`Spieler ${data.player} hat Karte ${data.card} gespielt.`);
+    });
+
+    showCards();
+  </script>
+</body>
+</html>
