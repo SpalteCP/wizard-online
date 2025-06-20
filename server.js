@@ -9,10 +9,12 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, "client/build")));
+// Statische Dateien aus dem "public"-Ordner ausliefern
+app.use(express.static(path.join(__dirname, "public")));
 
+// Alle Anfragen mit index.html beantworten (Single Page App)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 io.on("connection", (socket) => {
@@ -20,6 +22,12 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("Spieler hat verlassen:", socket.id);
+  });
+
+  socket.on("playCard", (card) => {
+    console.log(`Spieler ${socket.id} hat Karte gespielt: ${card}`);
+    // An alle anderen Spieler senden, dass eine Karte gespielt wurde
+    socket.broadcast.emit("cardPlayed", { player: socket.id, card });
   });
 });
 
